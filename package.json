@@ -4,6 +4,11 @@
   "description": "A simple parser of bibtex",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "generate-parser": "chmod +x ./build/generate-parser.sh && ./build/generate-parser.sh",
     "prebuild": "npm run generate-parser",
