@@ -40,7 +40,15 @@ export class Parser {
    * Clear all macros
    */
   public clearMacros(): void {
-    this.macroTable = {};
+    this.macroTable = Object.create(null);
+  }
+
+  public deleteMacro(name: string): boolean {
+    if (!name) return false;
+    const lowerName = name.toLowerCase();
+    if (this.macroTable[lowerName] === undefined) return false;
+    delete this.macroTable[lowerName];
+    return true;
   }
 
   /**

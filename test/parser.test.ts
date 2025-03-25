@@ -264,6 +264,34 @@ describe('Parser Component Tests', () => {
       expect(entries[0].fields.journal).toBe('Test Journal');
     });
 
+    test('should delete macros correctly', () => {
+      // Setup parser with some macros
+      const parser = new Parser();
+      parser.parseString('@string{journal = "Test Journal"}');
+      parser.parseString('@string{publisher = "Test Publisher"}');
+      
+      // Verify macros exist
+      expect(parser.macroExists('journal')).toBe(true);
+      expect(parser.macroExists('publisher')).toBe(true);
+      
+      // Delete one macro
+      const deleteResult = parser.deleteMacro('journal');
+      expect(deleteResult).toBe(true);
+      
+      // Verify it was deleted and other macro remains
+      expect(parser.macroExists('journal')).toBe(false);
+      expect(parser.macroExists('publisher')).toBe(true);
+      
+      // Try to delete a non-existent macro
+      const nonExistentResult = parser.deleteMacro('nonexistent');
+      expect(nonExistentResult).toBe(false);
+      
+      // Verify case insensitivity
+      const caseInsensitiveResult = parser.deleteMacro('PUBLISHER');
+      expect(caseInsensitiveResult).toBe(true);
+      expect(parser.macroExists('publisher')).toBe(false);
+    });
+
     test('should concatenate macros with strings', () => {
       // First define the macro
       const parser = new Parser();
