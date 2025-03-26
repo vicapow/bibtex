@@ -43,6 +43,48 @@ console.log(entries[0].key);  // 'smith2020'
 console.log(entries[0].fields.title); // 'A Sample Article'
 ```
 
+### Converting Entries to BibTeX
+
+```typescript
+import { Parser, BtEntry, BtMetatype } from '@vicapow/bibtex';
+
+// Create a new parser instance
+const parser = new Parser();
+
+// Create a BibTeX entry
+const entry: BtEntry = {
+  type: 'article',
+  key: 'smith2020',
+  metatype: BtMetatype.REGULAR,
+  fields: {
+    author: 'John Smith',
+    title: 'A Sample Article',
+    journal: 'Journal of Science',
+    year: '2020'
+  }
+};
+
+// Convert entry to BibTeX string
+const bibtexString = parser.stringify(entry);
+console.log(bibtexString);
+// Output:
+// @article{smith2020,
+//   author = {John Smith},
+//   title = {A Sample Article},
+//   journal = {Journal of Science},
+//   year = {2020}
+// }
+
+// You can also convert multiple entries at once
+const entries = parser.parseString(`
+  @article{key1, title = {Title 1}}
+  @book{key2, title = {Title 2}}
+`);
+
+const bibtexOutput = parser.stringifyEntries(entries);
+console.log(bibtexOutput);
+```
+
 ### Working with Macros
 
 ```typescript
@@ -123,7 +165,6 @@ interface BtEntry {
 - **No name parsing**: Does not split author names into components (first, last, etc.)
 - **No field validation**: Does not validate required or optional fields for different entry types
 - **Limited error recovery**: May fail on severely malformed BibTeX input
-- **No BibTeX writing**: This is a parser only; it does not generate BibTeX output
 
 ## Contributing
 

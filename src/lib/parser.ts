@@ -1,4 +1,4 @@
-import { BtEntry, EXPAND_MACROS } from './types';
+import { BtEntry, EXPAND_MACROS, BtMetatype } from './types';
 
 // Import the pre-generated parser instead of generating at runtime
 import parseAst from './generated-parser';
@@ -179,5 +179,107 @@ export class Parser {
       
       return entry;
     }).filter(entry => entry !== null) as BtEntry[];
+  }
+
+  /**
+   * Convert a BibTeX entry to a string
+   */
+  public stringifyEntry(entry: BtEntry): string {
+    if (!entry) {
+      return '';
+    }
+    
+    // Start with the entry type and key
+    let result = '';
+    
+    switch (entry.metatype) {
+      case BtMetatype.REGULAR:
+        result = `@${entry.type}{${entry.key}`;
+        
+        // Add fields if they exist
+        if (entry.fields && Object.keys(entry.fields).length > 0) {
+          result += ',\n';
+          
+          // Add each field
+          const fieldEntries = Object.entries(entry.fields);
+          fieldEntries.forEach(([key, value], index) => {
+            // Format the field
+            result += `  ${key} = {${value}}`;
+            
+            // Add comma if not the last field
+            if (index < fieldEntries.length - 1) {
+              result += ',';
+            }
+            
+            result += '\n';
+          });
+        }
+        
+        result += '}';
+        break;
+        
+      case BtMetatype.COMMENT:
+        result = `@comment{${entry.fields?.content || ''}}`;
+        break;
+        
+      case BtMetatype.PREAMBLE:
+        result = `@preamble{{${entry.fields?.content || ''}}}`;
+        break;
+        
+      case BtMetatype.MACRODEF:
+        result = '@string{';
+        
+        // Add each macro definition
+        if (entry.fields && Object.keys(entry.fields).length > 0) {
+          const macroEntries = Object.entries(entry.fields);
+          macroEntries.forEach(([key, value], index) => {
+            result += `${key} = "${value}"`;
+            
+            // Add comma if not the last field
+            if (index < macroEntries.length - 1) {
+              result += ',\n  ';
+            }
+          });
+        }
+        
+        result += '}';
+        break;
+        
+      default:
+        // For unknown entry types, just do basic formatting
+        result = `@${entry.type || 'unknown'}{${entry.key || ''}`;
+        
+        if (entry.fields && Object.keys(entry.fields).length > 0) {
+          result += ',\n';
+          
+          // Add each field
+          const fieldEntries = Object.entries(entry.fields);
+          fieldEntries.forEach(([key, value], index) => {
+            result += `  ${key} = {${value}}`;
+            
+            // Add comma if not the last field
+            if (index < fieldEntries.length - 1) {
+              result += ',';
+            }
+            
+            result += '\n';
+          });
+        }
+        
+        result += '}';
+    }
+    
+    return result;
+  }
+
+  /**
+   * Convert multiple BibTeX entries to a string
+   */
+  public stringifyEntries(entries: BtEntry[]): string {
+    if (!entries || entries.length === 0) {
+      return '';
+    }
+    
+    return entries.map(entry => this.stringifyEntry(entry)).join('\n\n');
   }
 } 
