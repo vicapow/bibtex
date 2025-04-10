@@ -202,8 +202,8 @@ function peg$parse(input, options) {
   var peg$r1 = /^[^@%]/;
   var peg$r2 = /^[({]/;
   var peg$r3 = /^[)}]/;
-  var peg$r4 = /^[a-zA-Z0-9_\-:.+\/]/;
-  var peg$r5 = /^[a-zA-Z]/;
+  var peg$r4 = /^[^ \t\n\r,@{}()]/;
+  var peg$r5 = /^[^ \t\n\r,@{}()0-9]/;
   var peg$r6 = /^[sS]/;
   var peg$r7 = /^[tT]/;
   var peg$r8 = /^[rR]/;
@@ -225,7 +225,7 @@ function peg$parse(input, options) {
   var peg$r24 = /^[^{}]/;
   var peg$r25 = /^[0-9]/;
   var peg$r26 = /^[^,}]/;
-  var peg$r27 = /^[a-zA-Z0-9!$&*+\-.\/:<>?[\]\^_`|]/;
+  var peg$r27 = /^[^ \t\n\r=,@{}()]/;
   var peg$r28 = /^[ \t\n\r]/;
 
   var peg$e0 = peg$literalExpectation("%", false);
@@ -242,8 +242,8 @@ function peg$parse(input, options) {
   var peg$e11 = peg$literalExpectation("=", false);
   var peg$e12 = peg$classExpectation(["(", "{"], false, false);
   var peg$e13 = peg$classExpectation([")", "}"], false, false);
-  var peg$e14 = peg$classExpectation([["a", "z"], ["A", "Z"], ["0", "9"], "_", "-", ":", ".", "+", "/"], false, false);
-  var peg$e15 = peg$classExpectation([["a", "z"], ["A", "Z"]], false, false);
+  var peg$e14 = peg$classExpectation([" ", "\t", "\n", "\r", ",", "@", "{", "}", "(", ")"], true, false);
+  var peg$e15 = peg$classExpectation([" ", "\t", "\n", "\r", ",", "@", "{", "}", "(", ")", ["0", "9"]], true, false);
   var peg$e16 = peg$classExpectation(["s", "S"], false, false);
   var peg$e17 = peg$classExpectation(["t", "T"], false, false);
   var peg$e18 = peg$classExpectation(["r", "R"], false, false);
@@ -270,7 +270,7 @@ function peg$parse(input, options) {
   var peg$e39 = peg$classExpectation([["0", "9"]], false, false);
   var peg$e40 = peg$literalExpectation("-", false);
   var peg$e41 = peg$classExpectation([",", "}"], true, false);
-  var peg$e42 = peg$classExpectation([["a", "z"], ["A", "Z"], ["0", "9"], "!", "$", "&", "*", "+", "-", ".", "/", ":", "<", ">", "?", "[", "]", "^", "_", "`", "|"], false, false);
+  var peg$e42 = peg$classExpectation([" ", "\t", "\n", "\r", "=", ",", "@", "{", "}", "(", ")"], true, false);
   var peg$e43 = peg$classExpectation([" ", "\t", "\n", "\r"], false, false);
 
   var peg$f0 = function(entries) { 
@@ -301,15 +301,12 @@ function peg$parse(input, options) {
         metatype: BtMetatype.REGULAR,
         fields: {}
       };
-      
-      // Process field assignments
       for (const field of fields) {
         if (field) {
           const [name, value] = field;
           entry.fields[name.toLowerCase()] = value;
         }
       }
-      
       return entry;
     };
   var peg$f6 = function(type, key, fields) {
@@ -319,15 +316,12 @@ function peg$parse(input, options) {
         metatype: BtMetatype.REGULAR,
         fields: {}
       };
-      
-      // Process field assignments
       for (const field of fields) {
         if (field) {
           const [name, value] = field;
           entry.fields[name.toLowerCase()] = value;
         }
       }
-      
       return entry;
     };
   var peg$f7 = function(s, name, value) {
@@ -338,7 +332,6 @@ function peg$parse(input, options) {
         metatype: BtMetatype.MACRODEF,
         fields: {}
       };
-      
       entry.fields[fieldName] = value;
       return entry;
     };
@@ -349,8 +342,6 @@ function peg$parse(input, options) {
         metatype: BtMetatype.MACRODEF,
         fields: {}
       };
-      
-      // Process multiple macros in the same @string entry
       for (const field of fields) {
         if (field) {
           const [name, value] = field;
@@ -358,7 +349,6 @@ function peg$parse(input, options) {
           entry.fields[fieldName] = value;
         }
       }
-      
       return entry;
     };
   var peg$f9 = function(p, value) {
@@ -403,20 +393,14 @@ function peg$parse(input, options) {
   var peg$f22 = function(name, value) { return [name, value]; };
   var peg$f23 = function(head, tail) {
       if (tail.length === 0) return head;
-      // For concatenation, return a node representing the operation
       const parts = [head];
       for (const t of tail) {
         parts.push(t[3]);
       }
       return ['concat', ...parts];
     };
-  var peg$f24 = function(name) {
-      // Return a node for macro reference instead of immediately resolving
-      return ['macro', name];
-    };
-  var peg$f25 = function(content) { 
-      return content.join(''); 
-    };
+  var peg$f24 = function(name) { return ['macro', name]; };
+  var peg$f25 = function(content) { return content.join(''); };
   var peg$f26 = function() { return ''; };
   var peg$f27 = function() { return '"'; };
   var peg$f28 = function(content) { return content; };

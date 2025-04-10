@@ -119,28 +119,23 @@ export class Parser {
     filename: string = "string input",
     options: number = 0
   ): BtEntry[] {
-    try {
-      // Use the pre-generated parser with appropriate options
-      const ast = parseAst(content, { startRule: "BibFile" });
+    // Use the pre-generated parser with appropriate options
+    const ast = parseAst(content, { startRule: "BibFile" });
 
-      // Process the AST into BtEntry objects
-      const entries = this.processAst(ast);
+    // Process the AST into BtEntry objects
+    const entries = this.processAst(ast);
 
-      // Apply any additional processing
-      if (options & EXPAND_MACROS) {
-        // Expand macros in fields
-        for (const entry of entries) {
-          for (const [key, value] of Object.entries(entry.fields)) {
-            entry.fields[key] = this.expandMacrosInValue(value);
-          }
+    // Apply any additional processing
+    if (options & EXPAND_MACROS) {
+      // Expand macros in fields
+      for (const entry of entries) {
+        for (const [key, value] of Object.entries(entry.fields)) {
+          entry.fields[key] = this.expandMacrosInValue(value);
         }
       }
-
-      return entries;
-    } catch (error) {
-      console.error(`Error parsing BibTeX: ${error}`);
-      return [];
     }
+
+    return entries;
   }
 
   // Process the AST to BtEntry objects
