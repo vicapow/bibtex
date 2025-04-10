@@ -1,7 +1,7 @@
-import { BtEntry, EXPAND_MACROS, BtMetatype } from './types';
+import { BtEntry, EXPAND_MACROS, BtMetatype } from "./types";
 
 // Import the pre-generated parser instead of generating at runtime
-import parseAst from './generated-parser';
+import parseAst from "./generated-parser";
 
 export class Parser {
   private macroTable: Record<string, string> = {};
@@ -13,18 +13,25 @@ export class Parser {
   /**
    * Define a macro. used in the parser.
    */
-  public defineMacro(name: string, text: string, filename?: string, line: number = 0): boolean {
+  public defineMacro(
+    name: string,
+    text: string,
+    filename?: string,
+    line: number = 0
+  ): boolean {
     if (!name) {
-      throw new Error(`Attempt to define macro with empty/null name ${filename}, ${line}`);
+      throw new Error(
+        `Attempt to define macro with empty/null name ${filename}, ${line}`
+      );
     }
-    
-    // Check if macro already exists
-    if (this.macroTable[name] !== undefined) {
-      throw new Error(`Overriding existing definition of macro "${name}" ${filename}, ${line}`);
-    }
-    
+
+    // // Check if macro already exists
+    // if (this.macroTable[name] !== undefined) {
+    //   throw new Error(`Overriding existing definition of macro "${name}" ${filename}, ${line}`);
+    // }
+
     // Add or replace the macro
-    this.macroTable[name] = text || '';
+    this.macroTable[name] = text || "";
     return true;
   }
 
@@ -68,44 +75,57 @@ export class Parser {
   /**
    * Expand macros in a string. used in the parser.
    */
-  private expandMacrosInValue(text: string | any[], filename?: string, line: number = 0): string {
-    if (!text) return '';
-    
+  private expandMacrosInValue(
+    text: string | any[],
+    filename?: string,
+    line: number = 0
+  ): string {
+    if (!text) return "";
+
     // Handle concatenation node
-    if (Array.isArray(text) && text[0] === 'concat') {
-      const parts = text.slice(1).map((part: any) => this.expandMacrosInValue(part, filename, line));
-      return parts.join('');
+    if (Array.isArray(text) && text[0] === "concat") {
+      const parts = text
+        .slice(1)
+        .map((part: any) => this.expandMacrosInValue(part, filename, line));
+      return parts.join("");
     }
-    
+
     // Handle macro reference node
-    if (Array.isArray(text) && text[0] === 'macro') {
+    if (Array.isArray(text) && text[0] === "macro") {
       const macroName = text[1].toLowerCase();
       const macroValue = this.macroTable[macroName];
       return macroValue !== undefined ? macroValue : macroName;
     }
-    
+
     // Simple word - check if it's a macro
-    if (typeof text === 'string' && /^[a-zA-Z0-9!$&*+\-./:<>?[\]^_`|]+$/.test(text)) {
+    if (
+      typeof text === "string" &&
+      /^[a-zA-Z0-9!$&*+\-./:<>?[\]^_`|]+$/.test(text)
+    ) {
       const lowerText = text.toLowerCase();
       if (this.macroTable[lowerText] !== undefined) {
         return this.macroTable[lowerText];
       }
     }
-    
+
     return String(text);
   }
 
   /**
    * Parse a BibTeX string
    */
-  public parseString(content: string, filename: string = 'string input', options: number = 0): BtEntry[] {
+  public parseString(
+    content: string,
+    filename: string = "string input",
+    options: number = 0
+  ): BtEntry[] {
     try {
       // Use the pre-generated parser with appropriate options
-      const ast = parseAst(content, { startRule: 'BibFile' });
-      
+      const ast = parseAst(content, { startRule: "BibFile" });
+
       // Process the AST into BtEntry objects
       const entries = this.processAst(ast);
-      
+
       // Apply any additional processing
       if (options & EXPAND_MACROS) {
         // Expand macros in fields
@@ -115,7 +135,7 @@ export class Parser {
           }
         }
       }
-      
+
       return entries;
     } catch (error) {
       console.error(`Error parsing BibTeX: ${error}`);
@@ -129,56 +149,59 @@ export class Parser {
       return [];
     }
 
-    return ast.map(entry => {
-      if (!entry) return null;
-      
-      // Handle macro definitions
-      if (entry.metatype === 'MACRODEF') {
-        // Process each field in the macro definition
-        Object.entries(entry.fields).forEach(([name, value]) => {
-          // Don't expand macros in the string definition itself, 
-          // just store the raw value to avoid double expansion
-          if (typeof value === 'string') {
-            this.defineMacro(name, value);
-          } else if (Array.isArray(value) && value[0] === 'macro') {
-            this.defineMacro(name, value[1]);
-          } else if (Array.isArray(value) && value[0] === 'concat') {
-            // For concatenation, we need to expand macros
-            const expandedValue = this.expandMacrosInValue(value);
-            this.defineMacro(name, expandedValue);
-          }
-        });
-      }
-      
-      // Process fields for regular entries
-      if (entry.fields) {
-        const processedFields: Record<string, string> = {};
-        
-        Object.entries(entry.fields).forEach(([name, value]) => {
-          if (typeof value === 'string') {
-            processedFields[name.toLowerCase()] = value;
-          } else if (Array.isArray(value) && value[0] === 'concat') {
-            // Handle concatenation expressions from the AST
-            const expandedParts = value.slice(1).map(part => {
-              if (typeof part === 'string') {
+    return ast
+      .map((entry) => {
+        if (!entry) return null;
+
+        // Handle macro definitions
+        if (entry.metatype === "MACRODEF") {
+          // Process each field in the macro definition
+          Object.entries(entry.fields).forEach(([name, value]) => {
+            // Don't expand macros in the string definition itself,
+            // just store the raw value to avoid double expansion
+            if (typeof value === "string") {
+              this.defineMacro(name, value);
+            } else if (Array.isArray(value) && value[0] === "macro") {
+              this.defineMacro(name, value[1]);
+            } else if (Array.isArray(value) && value[0] === "concat") {
+              // For concatenation, we need to expand macros
+              const expandedValue = this.expandMacrosInValue(value);
+              this.defineMacro(name, expandedValue);
+            }
+          });
+        }
+
+        // Process fields for regular entries
+        if (entry.fields) {
+          const processedFields: Record<string, string> = {};
+
+          Object.entries(entry.fields).forEach(([name, value]) => {
+            if (typeof value === "string") {
+              processedFields[name.toLowerCase()] = value;
+            } else if (Array.isArray(value) && value[0] === "concat") {
+              // Handle concatenation expressions from the AST
+              const expandedParts = value.slice(1).map((part) => {
+                if (typeof part === "string") {
+                  return part;
+                } else if (part[0] === "macro") {
+                  return this.lookupMacro(part[1]) || part[1];
+                }
                 return part;
-              } else if (part[0] === 'macro') {
-                return this.lookupMacro(part[1]) || part[1];
-              }
-              return part;
-            });
-            processedFields[name.toLowerCase()] = expandedParts.join('');
-          } else if (Array.isArray(value) && value[0] === 'macro') {
-            // For macro references, look up the value
-            processedFields[name.toLowerCase()] = this.lookupMacro(value[1]) || value[1];
-          }
-        });
-        
-        entry.fields = processedFields;
-      }
-      
-      return entry;
-    }).filter(entry => entry !== null) as BtEntry[];
+              });
+              processedFields[name.toLowerCase()] = expandedParts.join("");
+            } else if (Array.isArray(value) && value[0] === "macro") {
+              // For macro references, look up the value
+              processedFields[name.toLowerCase()] =
+                this.lookupMacro(value[1]) || value[1];
+            }
+          });
+
+          entry.fields = processedFields;
+        }
+
+        return entry;
+      })
+      .filter((entry) => entry !== null) as BtEntry[];
   }
 
   /**
@@ -186,89 +209,89 @@ export class Parser {
    */
   public stringifyEntry(entry: BtEntry): string {
     if (!entry) {
-      return '';
+      return "";
     }
-    
+
     // Start with the entry type and key
-    let result = '';
-    
+    let result = "";
+
     switch (entry.metatype) {
       case BtMetatype.REGULAR:
         result = `@${entry.type}{${entry.key}`;
-        
+
         // Add fields if they exist
         if (entry.fields && Object.keys(entry.fields).length > 0) {
-          result += ',\n';
-          
+          result += ",\n";
+
           // Add each field
           const fieldEntries = Object.entries(entry.fields);
           fieldEntries.forEach(([key, value], index) => {
             // Format the field
             result += `  ${key} = {${value}}`;
-            
+
             // Add comma if not the last field
             if (index < fieldEntries.length - 1) {
-              result += ',';
+              result += ",";
             }
-            
-            result += '\n';
+
+            result += "\n";
           });
         }
-        
-        result += '}';
+
+        result += "}";
         break;
-        
+
       case BtMetatype.COMMENT:
-        result = `@comment{${entry.fields?.content || ''}}`;
+        result = `@comment{${entry.fields?.content || ""}}`;
         break;
-        
+
       case BtMetatype.PREAMBLE:
-        result = `@preamble{{${entry.fields?.content || ''}}}`;
+        result = `@preamble{{${entry.fields?.content || ""}}}`;
         break;
-        
+
       case BtMetatype.MACRODEF:
-        result = '@string{';
-        
+        result = "@string{";
+
         // Add each macro definition
         if (entry.fields && Object.keys(entry.fields).length > 0) {
           const macroEntries = Object.entries(entry.fields);
           macroEntries.forEach(([key, value], index) => {
             result += `${key} = "${value}"`;
-            
+
             // Add comma if not the last field
             if (index < macroEntries.length - 1) {
-              result += ',\n  ';
+              result += ",\n  ";
             }
           });
         }
-        
-        result += '}';
+
+        result += "}";
         break;
-        
+
       default:
         // For unknown entry types, just do basic formatting
-        result = `@${entry.type || 'unknown'}{${entry.key || ''}`;
-        
+        result = `@${entry.type || "unknown"}{${entry.key || ""}`;
+
         if (entry.fields && Object.keys(entry.fields).length > 0) {
-          result += ',\n';
-          
+          result += ",\n";
+
           // Add each field
           const fieldEntries = Object.entries(entry.fields);
           fieldEntries.forEach(([key, value], index) => {
             result += `  ${key} = {${value}}`;
-            
+
             // Add comma if not the last field
             if (index < fieldEntries.length - 1) {
-              result += ',';
+              result += ",";
             }
-            
-            result += '\n';
+
+            result += "\n";
           });
         }
-        
-        result += '}';
+
+        result += "}";
     }
-    
+
     return result;
   }
 
@@ -277,9 +300,9 @@ export class Parser {
    */
   public stringifyEntries(entries: BtEntry[]): string {
     if (!entries || entries.length === 0) {
-      return '';
+      return "";
     }
-    
-    return entries.map(entry => this.stringifyEntry(entry)).join('\n\n');
+
+    return entries.map((entry) => this.stringifyEntry(entry)).join("\n\n");
   }
-} 
+}
